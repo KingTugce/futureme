@@ -18,10 +18,10 @@ const save = async () => {
   setSaving(true);
 
   const { error } = await supabase
-    .from('journal')               //  <--  use journal(not entries)
+    .from('journal')               // <--  use journal(not entries)
     .insert({
-      user_id: session.user.id,    //  <--  required for RLS
-      content: text.trim(),        //  <--  column is content (not content_text)
+      user_id: session.user.id,    // <--  required for RLS
+      content: text.trim(),        // <--  column is content (not content_text)
     });
 
   setSaving(false);
