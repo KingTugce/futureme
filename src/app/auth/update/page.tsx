@@ -1,4 +1,4 @@
-// app/auth/update/page.tsx — handle reset session to set new password
+        // app/auth/update/page.tsx — handle reset session to set new password
 // -----------------------------
 'use client';
 import { useEffect, useState } from 'react';
