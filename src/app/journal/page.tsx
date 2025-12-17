@@ -41,7 +41,7 @@ export default function JournalPage() {
     }
 
     setContent('');
-    mutateEntries(); //refresh list
+    mutateEntries();   //refresh list
     alert('Saved.');
   }
 
