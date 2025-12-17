@@ -10,7 +10,7 @@ const supabase = createBrowserClient();
 const [pwd, setPwd] = useState('');
 const [msg, setMsg] = useState<string | null>(null);
 useEffect(()=>{
-     // Supabase sets a recovery session on redirect
+         // Supabase sets a recovery session on redirect
 },[]);
 return (
 <div className="min-h-screen grid place-items-center p-6">
