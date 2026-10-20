@@ -9,6 +9,8 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json());
 export default function JournalPage() {
   const [content, setContent] = useState('');
   const [saving, setSaving] = useState(false);
+  const [reflections, setReflections] = useState<Record<string, string>>({});
+  const [reflectingId, setReflectingId] = useState<string | null>(null);
 
   // daily prompt
   const { data: promptData } = useSWR('/api/prompts/today', fetcher);
@@ -20,6 +22,25 @@ export default function JournalPage() {
   );
 
   const entries = entriesData?.entries ?? [];
+
+const { data: savedData } = useSWR('/api/reflect', fetcher);
+
+const savedReflections: Record<string, string> = {};
+
+for (const r of (savedData?.reflections ?? []) as Array<{
+  entry_id: string;
+  content: string;
+}>) {
+  if (savedReflections[r.entry_id] === undefined) {
+    savedReflections[r.entry_id] = r.content;
+  }
+}
+
+const visibleReflections = {
+  ...savedReflections,
+  ...reflections,
+};
+
 
   async function saveEntry() {
     const body = content.trim();
@@ -45,6 +66,37 @@ export default function JournalPage() {
     alert('Saved.');
   }
 
+
+async function reflectEntry(entry: { id: string; content_text: string }) {
+  setReflectingId(entry.id);
+
+  try {
+    const res = await fetch('/api/reflect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+      entryId: entry.id,
+      content: entry.content_text,
+        }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error('Reflection request failed');
+    }
+
+    setReflections((prev) => ({
+      ...prev,
+      [entry.id]: data.text || 'No reflection returned.',
+    }));
+  } catch {
+    alert('Unable to generate reflection. Please try again.');
+  } finally {
+    setReflectingId(null);
+  }
+}
+
   const today = new Date().toLocaleDateString();
 
   return (
@@ -66,7 +118,7 @@ export default function JournalPage() {
         </p>
       </section>
 
-      {/* New entry */} 
+      {/* New entry */}
       <section className= "space-y-2" >
         <textarea
           value={content}
@@ -109,6 +161,24 @@ export default function JournalPage() {
               <p className="mt-1 whitespace-pre-wrap text-slate-800">
                 {e.content_text}
               </p>
+
+
+                <button
+                  type="button"
+                  onClick={() => reflectEntry(e)}
+                  disabled={reflectingId !== null}
+                  className="mt-3 rounded-lg bg-indigo-600 px-3 py-2 text-sm text-white disabled:opacity-50"
+                >
+                  {reflectingId === e.id ? 'Reflecting…' : 'Reflect with AI'}
+                </button>
+
+                  {visibleReflections[e.id] && (
+                <p className="mt-3 rounded-xl bg-indigo-50 p-3 text-sm text-slate-800">
+                  {visibleReflections[e.id]}
+                </p>
+              )}
+
+
             </li>
           ))}
         </ul>

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase-old';
 import { useEffect, useState } from 'react';
 import QuickNoteTrigger from './QuickNoteTrigger';
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 export default function SiteHeader() {
   const supabase = createClient();
@@ -14,9 +15,10 @@ export default function SiteHeader() {
       const { data } = await supabase.auth.getUser();
       setEmail(data.user?.email ?? null);
     })();
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) =>
+      const { data: sub } = supabase.auth.onAuthStateChange(
+      (_e: AuthChangeEvent, s: Session | null) =>
       setEmail(s?.user?.email ?? null)
-    );
+      );
     return () => sub.subscription.unsubscribe();
   }, [supabase]);
 
