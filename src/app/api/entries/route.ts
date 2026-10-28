@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase/server';
 
 export async function GET() {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
 
   const { data: { user }, error: authError } =
     await supabase.auth.getUser();
@@ -22,7 +22,7 @@ export async function GET() {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error loading entries:', error);
+    console.error('Unable to load journal entries');
     return NextResponse.json(
       { error: 'Unable to load entries' },
       { status: 500 }
@@ -33,7 +33,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
 
   const { data: { user }, error: authError } =
     await supabase.auth.getUser();
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
-    console.error('Error saving entry:', error);
+    console.error('Unable to save journal entry');
     return NextResponse.json(
       { error: 'Unable to save entry' },
       { status: 500 }

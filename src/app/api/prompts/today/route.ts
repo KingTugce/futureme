@@ -5,14 +5,19 @@ import { supabaseServer } from '@/lib/supabase/server';
 
 
 export async function GET(){
-const supabase = supabaseServer();
+const supabase = await supabaseServer();
 const { data: { user } } = await supabase.auth.getUser();
 if(!user) return NextResponse.json({ error: 'unauthenticated' }, { status: 401 });
 
 
 const today = new Date().toISOString().slice(0,10);
 const { data: existing } = await supabase.from('user_prompt_log').select('id, prompt_id, served_on, daily_prompts:prompt_id(text)').eq('user_id', user.id).eq('served_on', today).maybeSingle();
-if(existing) return NextResponse.json({ id: existing.prompt_id, text: (existing as any).daily_prompts.text });
+if(existing) {
+const relatedPrompt = existing.daily_prompts as { text: string } | { text: string }[] | null;
+const prompt = Array.isArray(relatedPrompt) ? relatedPrompt[0] : relatedPrompt;
+if(!prompt) return NextResponse.json({ error: 'Prompt unavailable.' }, { status: 500 });
+return NextResponse.json({ id: existing.prompt_id, text: prompt.text });
+}
 
 
 // rotate deterministically by day for stability

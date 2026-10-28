@@ -45,3 +45,37 @@
   outline-color: rgb(var(--ring));
 }
       
+
+
+/* FutureMe — premium visual foundation */
+
+body {
+  min-height: 100vh;
+  color: #292638;
+  background:
+    radial-gradient(
+      ellipse at 90% 0%,
+      rgba(185, 167, 225, 0.22),
+      transparent 48%
+    ),
+    radial-gradient(
+      ellipse at 0% 65%,
+      rgba(230, 209, 205, 0.18),
+      transparent 48%
+    ),
+    #f8f7f5;
+}
+
+::selection {
+  background: #ddd4f2;
+  color: #292638;
+}
+
+/* Keep mobile text comfortable and prevent layout overflow */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  overflow-x: clip;
+}

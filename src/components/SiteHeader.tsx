@@ -1,30 +1,35 @@
 'use client';
 
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase-old';
-import { useEffect, useState } from 'react';
+import { createBrowserClient } from '@/lib/supabase/client';
+import { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import QuickNoteTrigger from './QuickNoteTrigger';
-import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
+import { useAuthSession } from './AuthSessionProvider';
 
 export default function SiteHeader() {
-  const supabase = createClient();
-  const [email, setEmail] = useState<string | null>(null);
-
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase.auth.getUser();
-      setEmail(data.user?.email ?? null);
-    })();
-      const { data: sub } = supabase.auth.onAuthStateChange(
-      (_e: AuthChangeEvent, s: Session | null) =>
-      setEmail(s?.user?.email ?? null)
-      );
-    return () => sub.subscription.unsubscribe();
-  }, [supabase]);
+  const { user } = useAuthSession();
+  const router = useRouter();
+  const pending = useRef(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const [error, setError] = useState('');
 
   const logout = async () => {
-    await supabase.auth.signOut();
-    window.location.href = '/';
+    if (pending.current) return;
+    pending.current = true;
+    setSigningOut(true);
+    setError('');
+    try {
+      const { error: signOutError } = await createBrowserClient().auth.signOut({ scope: 'local' });
+      if (signOutError) throw signOutError;
+      router.replace('/auth');
+      router.refresh();
+    } catch {
+      setError('Unable to sign out. Please try again.');
+    } finally {
+      pending.current = false;
+      setSigningOut(false);
+    }
   };
 
   return (
@@ -42,15 +47,17 @@ export default function SiteHeader() {
             Journal
           </Link>
 
-          {email ? (
+          {user ? (
             <>
               <QuickNoteTrigger />
-              <span className="hidden sm:inline text-xs text-neutral-500">{email}</span>
+              <span className="hidden sm:inline text-xs text-neutral-500">{user.email}</span>
+              <Link href="/auth/update" className="text-xs text-neutral-600 underline">Set password</Link>
               <button
                 onClick={logout}
+                disabled={signingOut}
                 className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm text-neutral-800 hover:bg-neutral-100"
               >
-                Logout
+                {signingOut ? 'Signing out…' : 'Logout'}
               </button>
             </>
           ) : (
@@ -61,6 +68,7 @@ export default function SiteHeader() {
           )}
         </nav>
       </div>
+      {error && <p role="alert" className="px-5 pb-2 text-sm text-rose-700">{error}</p>}
     </header>
   );
 }
